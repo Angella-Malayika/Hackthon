@@ -1,0 +1,213 @@
+/* signup page */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+
+    background:#f5f7fb;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    min-height:100vh;
+}
+
+.container{
+
+    width:100%;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+}
+
+.signup-box{
+
+    width:420px;
+
+    background:white;
+
+    padding:35px;
+
+    border-radius:12px;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.1);
+
+}
+
+.signup-box h2{
+
+    text-align:center;
+
+    color:#1f2937;
+
+}
+
+.signup-box p{
+
+    text-align:center;
+
+    margin:10px 0 25px;
+
+    color:#555;
+
+}
+
+.input-group{
+
+    margin-bottom:18px;
+
+}
+
+.input-group label{
+
+    display:block;
+
+    margin-bottom:6px;
+
+    font-weight:bold;
+
+}
+
+.input-group input{
+
+    width:100%;
+
+    padding:12px;
+
+    border:1px solid #ccc;
+
+    border-radius:8px;
+
+    outline:none;
+
+}
+
+.input-group input:focus{
+
+    border-color:#2563eb;
+
+}
+
+.show-password{
+
+    margin-bottom:20px;
+
+}
+
+.btn{
+
+    width:100%;
+
+    padding:13px;
+
+    border:none;
+
+    background:#2563eb;
+
+    color:white;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    font-size:16px;
+
+}
+
+.btn:hover{
+
+    background:#1e40af;
+
+}
+
+.rules{
+
+    margin-top:25px;
+
+    background:#f8fafc;
+
+    padding:15px;
+
+    border-radius:8px;
+
+}
+
+.rules h4{
+
+    margin-bottom:10px;
+
+}
+
+.rules ul{
+
+    list-style:none;
+
+}
+
+.rules li{
+
+    margin:8px 0;
+
+    color:red;
+
+}
+
+.valid{
+
+    color:green !important;
+
+}
+
+.login-link{
+
+    margin-top:20px;
+
+}
+/* sign in page */
+.login-options{
+
+    text-align:right;
+
+    margin-bottom:20px;
+
+}
+
+.login-options a{
+
+    text-decoration:none;
+
+    color:#2563eb;
+
+}
+
+.login-options a:hover{
+
+    text-decoration:underline;
+
+}
+/* logout page */
+.logout-btn{
+    display:inline-block;
+    margin-top:20px;
+    padding:10px 20px;
+    background:#dc3545;
+    color:#fff;
+    text-decoration:none;
+    border-radius:6px;
+    transition:0.3s;
+}
+
+.logout-btn:hover{
+    background:#bb2d3b;
+}
