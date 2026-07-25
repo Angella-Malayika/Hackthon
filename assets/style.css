@@ -1,3 +1,24 @@
+/* Message alerts */
+.success {
+    background: #d4edda;
+    color: #155724;
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    border-left: 4px solid #28a745;
+    font-size: 14px;
+}
+
+.error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    border-left: 4px solid #dc3545;
+    font-size: 14px;
+}
+
 /* signup page */
 *{
     margin:0;
@@ -6,195 +27,172 @@
     font-family:Arial, Helvetica, sans-serif;
 }
 
+body[data-theme="light"] {
+    --body-bg: #f5f7fb;
+    --panel-bg: #ffffff;
+    --text-color: #1f2937;
+    --muted-color: #555555;
+    --input-border: #cccccc;
+    --rules-bg: #f8fafc;
+    --btn-bg: #2563eb;
+    --btn-hover: #1e40af;
+    --link-color: #2563eb;
+}
+
+body[data-theme="dark"] {
+    --body-bg: #0f172a;
+    --panel-bg: #111827;
+    --text-color: #f5f7fb;
+    --muted-color: #c8d1df;
+    --input-border: #334155;
+    --rules-bg: #0b1220;
+    --btn-bg: #03a60c;
+    --btn-hover: #028c0a;
+    --link-color: #7dd3fc;
+}
+
 body{
-
-    background:#f5f7fb;
-
+    background:var(--body-bg);
+    color:var(--text-color);
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
     min-height:100vh;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .container{
-
     width:100%;
-
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
 }
 
 .signup-box{
-
     width:420px;
-
-    background:white;
-
+    background:var(--panel-bg);
+    color:var(--text-color);
     padding:35px;
-
     border-radius:12px;
-
-    box-shadow:0 10px 25px rgba(0,0,0,.1);
-
+    box-shadow:0 10px 25px rgba(0,0,0,.2);
 }
 
 .signup-box h2{
-
     text-align:center;
-
-    color:#1f2937;
-
+    color:var(--text-color);
 }
 
 .signup-box p{
-
     text-align:center;
-
     margin:10px 0 25px;
-
-    color:#555;
-
+    color:var(--muted-color);
 }
 
 .input-group{
-
     margin-bottom:18px;
-
 }
 
 .input-group label{
-
     display:block;
-
     margin-bottom:6px;
-
     font-weight:bold;
-
+    color:var(--text-color);
 }
 
 .input-group input{
-
     width:100%;
-
     padding:12px;
-
-    border:1px solid #ccc;
-
+    border:1px solid var(--input-border);
     border-radius:8px;
-
     outline:none;
-
+    background:var(--panel-bg);
+    color:var(--text-color);
 }
 
 .input-group input:focus{
-
-    border-color:#2563eb;
-
+    border-color:var(--btn-bg);
 }
 
 .show-password{
-
     margin-bottom:20px;
-
+    color:var(--text-color);
 }
 
 .btn{
-
     width:100%;
-
     padding:13px;
-
     border:none;
-
-    background:#2563eb;
-
+    background:var(--btn-bg);
     color:white;
-
     border-radius:8px;
-
     cursor:pointer;
-
     font-size:16px;
-
+    transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .btn:hover{
+    background:var(--btn-hover);
+    transform: translateY(-1px);
+}
 
-    background:#1e40af;
+.btn-login {
+    width: 100%;
+    background: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.18);
+    border: none;
+}
 
+.btn-login:hover {
+    background: #1e40af !important;
 }
 
 .rules{
-
     margin-top:25px;
-
-    background:#f8fafc;
-
+    background:var(--rules-bg);
     padding:15px;
-
     border-radius:8px;
-
 }
 
 .rules h4{
-
     margin-bottom:10px;
-
+    color:var(--text-color);
 }
 
 .rules ul{
-
     list-style:none;
-
 }
 
 .rules li{
-
     margin:8px 0;
-
     color:red;
-
 }
 
 .valid{
-
     color:green !important;
-
 }
 
 .login-link{
-
     margin-top:20px;
+    color:var(--text-color);
+}
 
+.login-link a,
+.forgot-link a,
+.login-options a{
+    text-decoration:none;
+    color:var(--link-color);
+}
+
+.login-link a:hover,
+.forgot-link a:hover,
+.login-options a:hover{
+    text-decoration:underline;
 }
 /* sign in page */
 .login-options{
-
     text-align:right;
-
     margin-bottom:20px;
-
-}
-
-.login-options a{
-
-    text-decoration:none;
-
-    color:#2563eb;
-
-}
-
-.login-options a:hover{
-
-    text-decoration:underline;
-
 }
 /* logout page */
 .logout-btn{

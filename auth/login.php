@@ -59,7 +59,7 @@ require_once("../core.php");
                     <a href="forgot_password.php"> Forgot Password? </a>
                 </div>
 
-                <button type="submit" class="btn"> Login </button>
+                <button type="submit" class="btn btn-login"> Login </button>
 
             </form>
 

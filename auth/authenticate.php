@@ -36,6 +36,20 @@ if ($result->num_rows == 1) {
     // Verify password
     if (password_verify($password, $user['password'])) {
 
+        // Check if user is blocked
+        if (isset($user['status']) && $user['status'] === 'blocked') {
+            $_SESSION['error'] = "Your account has been blocked. Please contact the administrator.";
+            header("Location: login.php");
+            exit();
+        }
+
+        // Check if user is inactive
+        if (isset($user['status']) && $user['status'] === 'inactive') {
+            $_SESSION['error'] = "Your account is inactive. Please contact the administrator.";
+            header("Location: login.php");
+            exit();
+        }
+
         // Prevent session fixation
         session_regenerate_id(true);
 
@@ -44,6 +58,9 @@ if ($result->num_rows == 1) {
         $_SESSION['fullname'] = $user['fullname'];
         $_SESSION['email'] = $user['email'];
         $_SESSION['role'] = $user['role'];
+        $_SESSION['theme'] = isset($user['theme']) && in_array($user['theme'], ['light', 'dark'], true)
+            ? $user['theme']
+            : 'light';
 
         // Redirect according to role
         if ($user['role'] == "admin") {

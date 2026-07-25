@@ -11,6 +11,7 @@ $settings = [
     'site_name' => 'Internet Governance & Awareness Platform',
     'site_tagline' => 'Empowering Digital Citizens',
     'site_logo' => '🌐',
+    'theme_mode' => 'light',
     'primary_color' => '#03a60c',
     'secondary_color' => '#028c0a',
     'default_avatar' => 'default.png',
@@ -47,6 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_settings'])) {
     $site_name = trim($_POST['site_name']);
     $site_tagline = trim($_POST['site_tagline']);
     $site_logo = trim($_POST['site_logo']);
+    $theme_mode = isset($_POST['theme_mode']) && in_array($_POST['theme_mode'], ['light', 'dark'], true)
+        ? $_POST['theme_mode']
+        : 'light';
     $primary_color = trim($_POST['primary_color']);
     $secondary_color = trim($_POST['secondary_color']);
     $default_avatar = trim($_POST['default_avatar']);
@@ -83,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_settings'])) {
             'site_name' => $site_name,
             'site_tagline' => $site_tagline,
             'site_logo' => $site_logo,
+            'theme_mode' => $theme_mode,
             'primary_color' => $primary_color,
             'secondary_color' => $secondary_color,
             'default_avatar' => $default_avatar,
@@ -270,6 +275,15 @@ try {
                         </div>
                     </div>
                     
+                    <div class="form-group">
+                        <label for="theme_mode">Default Theme Mode</label>
+                        <select id="theme_mode" name="theme_mode">
+                            <option value="light" <?php echo $settings['theme_mode'] == 'light' ? 'selected' : ''; ?>>Light Mode</option>
+                            <option value="dark" <?php echo $settings['theme_mode'] == 'dark' ? 'selected' : ''; ?>>Dark Mode</option>
+                        </select>
+                        <div class="help-text">Choose the default platform appearance</div>
+                    </div>
+
                     <div class="form-group">
                         <label for="default_avatar">Default Avatar</label>
                         <input type="text" id="default_avatar" name="default_avatar" 

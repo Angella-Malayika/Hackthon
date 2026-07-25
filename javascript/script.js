@@ -1,25 +1,35 @@
 document.addEventListener("DOMContentLoaded", function () {
-    
-    // --- 1. SIGNUP PAGE FUNCTIONALITY ---
+    initAuthUI();
+    initAdminUI();
+    initThemeToggle();
+});
+
+function initAuthUI() {
     const signupPassword = document.getElementById("password");
     const confirmPassword = document.getElementById("confirmPassword");
     const signupCheckbox = document.getElementById("showPassword");
 
-    // Password guidelines color validation
     if (signupPassword) {
         signupPassword.addEventListener("keyup", function () {
             const value = signupPassword.value;
+            const rules = [
+                ["length", value.length >= 8],
+                ["max", value.length <= 16],
+                ["upper", /[A-Z]/.test(value)],
+                ["lower", /[a-z]/.test(value)],
+                ["number", /[0-9]/.test(value)],
+                ["special", /[\W]/.test(value)]
+            ];
 
-            document.getElementById("length").classList.toggle("valid", value.length >= 8);
-            document.getElementById("max").classList.toggle("valid", value.length <= 16);
-            document.getElementById("upper").classList.toggle("valid", /[A-Z]/.test(value));
-            document.getElementById("lower").classList.toggle("valid", /[a-z]/.test(value));
-            document.getElementById("number").classList.toggle("valid", /[0-9]/.test(value));
-            document.getElementById("special").classList.toggle("valid", /[\W]/.test(value));
+            rules.forEach(([id, isValid]) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.classList.toggle("valid", isValid);
+                }
+            });
         });
     }
 
-    // Toggle Show/Hide on Signup Page
     if (signupCheckbox) {
         signupCheckbox.addEventListener("change", function () {
             const type = this.checked ? "text" : "password";
@@ -28,39 +38,133 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // --- 2. LOGIN PAGE FUNCTIONALITY ---
     const loginPassword = document.getElementById("loginPassword");
     const loginCheckbox = document.getElementById("showLoginPassword");
 
-    // Toggle Show/Hide on Login Page
     if (loginCheckbox && loginPassword) {
         loginCheckbox.addEventListener("change", function () {
             loginPassword.type = this.checked ? "text" : "password";
         });
     }
-<<<<<<< Updated upstream
-});
-=======
-});
-/**
- * Dashboard JavaScript
- * Handles interactive elements on the dashboard
- */
+}
 
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // Animate progress bar on load
+function initAdminUI() {
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const sidebar = document.querySelector('.admin-sidebar');
+
+    if (toggleBtn && sidebar) {
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+
+        toggleBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        });
+
+        overlay.addEventListener('click', function () {
+            sidebar.classList.remove('show');
+            overlay.classList.remove('show');
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && sidebar.classList.contains('show')) {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+            }
+        });
+    }
+
+    const notificationWrapper = document.querySelector('.notification-wrapper');
+    const dropdown = document.getElementById('notificationDropdown');
+
+    if (notificationWrapper && dropdown) {
+        notificationWrapper.addEventListener('click', function (e) {
+            e.stopPropagation();
+            dropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!notificationWrapper.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        const markAllRead = document.querySelector('.mark-all-read');
+        if (markAllRead) {
+            markAllRead.addEventListener('click', function (e) {
+                e.stopPropagation();
+                markAllNotificationsAsRead();
+            });
+        }
+    }
+
     animateProgressBar();
-    
-    // Add hover effects to stat cards
     setupStatCards();
-    
-    // Handle notification clicks
     setupNotifications();
-    
-    // Auto-refresh dashboard stats every 30 seconds (optional)
-    // setupAutoRefresh();
-});
+}
+
+function initThemeToggle() {
+    const toggles = Array.from(document.querySelectorAll('[data-theme-toggle]'));
+
+    if (!toggles.length) {
+        return;
+    }
+
+    const root = document.body;
+    const storedPreference = localStorage.getItem('themePreference');
+    const currentTheme = root.dataset.theme || storedPreference || 'light';
+    const userTheme = currentTheme === 'dark' ? 'dark' : 'light';
+
+    applyTheme(userTheme);
+
+    toggles.forEach(function (toggle) {
+        toggle.addEventListener('click', function () {
+            const nextTheme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+            applyTheme(nextTheme);
+            localStorage.setItem('themePreference', nextTheme);
+
+            fetch('../auth/theme.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'theme=' + encodeURIComponent(nextTheme)
+            }).catch(function () {
+                console.warn('Theme preference could not be saved.');
+            });
+        });
+    });
+
+    function applyTheme(theme) {
+        root.dataset.theme = theme;
+        localStorage.setItem('themePreference', theme);
+
+        toggles.forEach(function (toggle) {
+            const icon = toggle.querySelector('[data-theme-icon], #themeIcon');
+            const label = toggle.querySelector('[data-theme-label], #themeLabel');
+            const switchLabel = toggle.querySelector('[data-theme-switch-label]');
+            const isDark = theme === 'dark';
+
+            if (icon) {
+                icon.textContent = isDark ? '☀️' : '🌙';
+            }
+
+            if (label) {
+                label.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+            }
+
+            if (switchLabel) {
+                switchLabel.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+            }
+
+            toggle.classList.toggle('is-dark', isDark);
+            toggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+            toggle.setAttribute('data-theme-state', isDark ? 'dark' : 'light');
+        });
+    }
+}
 
 /**
  * Animate progress bar with a smooth transition
@@ -102,11 +206,7 @@ function setupNotifications() {
     const notificationBell = document.querySelector('.notification');
     if (notificationBell) {
         notificationBell.addEventListener('click', function() {
-            // Show notification dropdown or alert
             alert('🔔 You have 3 unread notifications!');
-            
-            // In a real implementation, you would fetch notifications via AJAX
-            // and display them in a dropdown
             fetchNotifications();
         });
     }
@@ -941,4 +1041,3 @@ window.showToast = showToast;
                 closeReplyModal();
             }
         });
->>>>>>> Stashed changes

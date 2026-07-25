@@ -13,6 +13,11 @@ $admin_initial = strtoupper(substr($admin_name, 0, 1));
     </div>
 
     <div class="topbar-right">
+        <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+            <span id="themeIcon">🌙</span>
+            <span id="themeLabel">Dark Mode</span>
+        </button>
+
         <!-- Notifications -->
         <div class="notification-wrapper">
             <span class="notification-icon">🔔</span>

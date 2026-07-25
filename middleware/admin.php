@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // Check if user has admin role
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: ../user/dashboard.php");
+    header("Location: ../user/learn.php");
     exit();
 }
 

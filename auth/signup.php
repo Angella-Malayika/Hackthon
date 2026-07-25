@@ -16,16 +16,6 @@ require_once("../core.php");
 </head>
 
 <body>
-    <?php
-
-    if (isset($_SESSION['error'])) {
-
-        echo "<div class='error'>" . $_SESSION['error'] . "</div>";
-
-        unset($_SESSION['error']);
-    }
-
-    ?>
 
     <div class="container">
 
@@ -34,6 +24,24 @@ require_once("../core.php");
             <h2>Create Account</h2>
 
             <p>Create your account to continue.</p>
+
+            <?php
+
+            if (isset($_SESSION['error'])) {
+
+                echo "<div class='error'>" . $_SESSION['error'] . "</div>";
+
+                unset($_SESSION['error']);
+            }
+
+            if (isset($_SESSION['success'])) {
+
+                echo "<div class='success'>" . $_SESSION['success'] . "</div>";
+
+                unset($_SESSION['success']);
+            }
+
+            ?>
 
             <form action="register.php" method="POST">
 

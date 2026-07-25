@@ -1,4 +1,33 @@
 /* ---------- Admin Panel Styles ---------- */
+body[data-theme="light"] {
+    --page-bg: #f8f9fa;
+    --topbar-bg: #ffffff;
+    --card-bg: #ffffff;
+    --panel-bg: #1a1a2e;
+    --panel-text: #ffffff;
+    --text-color: #1a1a2e;
+    --muted-text: #666666;
+    --border-color: #e9ecef;
+    --shadow: 0 2px 10px rgba(0,0,0,0.05);
+    --dropdown-bg: #ffffff;
+    --notification-item-bg: #f8f9fa;
+    --input-bg: #ffffff;
+}
+
+body[data-theme="dark"] {
+    --page-bg: #0f172a;
+    --topbar-bg: #111827;
+    --card-bg: #162032;
+    --panel-bg: #0b1220;
+    --panel-text: #ffffff;
+    --text-color: #f8fafc;
+    --muted-text: #94a3b8;
+    --border-color: #243042;
+    --shadow: 0 8px 25px rgba(0,0,0,0.35);
+    --dropdown-bg: #111827;
+    --notification-item-bg: #0f172a;
+    --input-bg: #101826;
+}
 
 /* Admin Sidebar */
 .admin-sidebar {
@@ -7,8 +36,8 @@
     top: 0;
     width: 260px;
     height: 100vh;
-    background: #1a1a2e;
-    color: white;
+    background: var(--panel-bg);
+    color: var(--panel-text);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -128,12 +157,13 @@
 /* Admin Topbar */
 .admin-topbar {
     height: 70px;
-    background: white;
+    background: var(--topbar-bg);
+    color: var(--text-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 30px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow);
     position: sticky;
     top: 0;
     z-index: 999;
@@ -151,13 +181,30 @@
     border: none;
     font-size: 24px;
     cursor: pointer;
-    color: #1a1a2e;
+    color: var(--text-color);
+}
+
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-color);
+    padding: 8px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.theme-toggle:hover {
+    background: rgba(3, 166, 12, 0.1);
 }
 
 .page-title {
     font-size: 1.2rem;
     font-weight: 600;
-    color: #1a1a2e;
+    color: var(--text-color);
 }
 
 .topbar-right {
@@ -195,7 +242,7 @@
     top: 100%;
     right: -10px;
     width: 340px;
-    background: white;
+    background: var(--dropdown-bg);
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.15);
     margin-top: 10px;
@@ -223,7 +270,7 @@
 
 .dropdown-header {
     padding: 15px 20px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -231,7 +278,7 @@
 
 .dropdown-header h4 {
     margin: 0;
-    color: #1a1a2e;
+    color: var(--text-color);
     font-size: 16px;
 }
 
@@ -319,20 +366,217 @@
 .admin-name {
     font-size: 14px;
     font-weight: 600;
-    color: #1a1a2e;
+    color: var(--text-color);
 }
 
 .admin-role {
     font-size: 11px;
-    color: #999;
+    color: var(--muted-text);
 }
 
 /* Admin Content Area */
 .admin-content {
     margin-left: 260px;
     padding: 30px;
-    background: #f8f9fa;
+    background: var(--page-bg);
     min-height: calc(100vh - 70px);
+}
+
+/* Shared User Navigation */
+.user-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    background: var(--topbar-bg);
+    border-bottom: 1px solid var(--border-color);
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.user-navbar .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-color);
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.user-navbar .theme-toggle:hover {
+    background: rgba(3, 166, 12, 0.1);
+    border-color: #03a60c;
+}
+
+.theme-setting-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.theme-setting-card h2 {
+    margin-bottom: 8px;
+}
+
+.theme-setting-card p {
+    margin: 0;
+    color: var(--muted-text);
+}
+
+.theme-toggle-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-color);
+    padding: 10px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.theme-toggle-card:hover {
+    border-color: #03a60c;
+    background: rgba(3, 166, 12, 0.1);
+}
+
+.theme-toggle-card.is-dark {
+    background: rgba(3, 166, 12, 0.16);
+    border-color: #03a60c;
+}
+
+.theme-toggle-switch {
+    width: 46px;
+    height: 24px;
+    border-radius: 999px;
+    background: #cbd5e1;
+    position: relative;
+    padding: 3px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle-card.is-dark .theme-toggle-switch {
+    background: #03a60c;
+}
+
+.theme-toggle-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle-card.is-dark .theme-toggle-thumb {
+    transform: translateX(22px);
+}
+
+.brand-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-color);
+}
+
+.brand-logo {
+    font-size: 30px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-color);
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.nav-links a.active,
+.nav-links a:hover {
+    background: rgba(3, 166, 12, 0.12);
+    color: #03a60c;
+}
+
+.user-profile-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-color);
+}
+
+.user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #03a60c;
+    color: #fff;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+}
+
+.user-page-container {
+    padding: 28px;
+    background: var(--page-bg);
+    min-height: calc(100vh - 74px);
+}
+
+.user-hero-card,
+.user-card {
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.user-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.btn-primary,
+.btn-secondary {
+    display: inline-block;
+    padding: 10px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: 12px;
+}
+
+.btn-primary {
+    background: #03a60c;
+    color: white;
+}
+
+.btn-secondary {
+    background: #e9ecef;
+    color: #1a1a2e;
 }
 
 /* Admin Dashboard Cards */
@@ -554,6 +798,24 @@
     .notification-dropdown {
         width: 300px;
         right: -70px;
+    }
+
+    .theme-setting-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .theme-toggle-card {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .user-page-container {
+        padding: 18px;
+    }
+
+    .user-card {
+        padding: 20px;
     }
 }
 

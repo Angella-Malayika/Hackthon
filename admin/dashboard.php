@@ -74,7 +74,11 @@ $quickActions = [
     ['icon' => '➕', 'label' => 'Add Lesson', 'link' => 'lessons.php?action=add'],
     ['icon' => '📂', 'label' => 'Add Category', 'link' => 'categories.php?action=add'],
     ['icon' => '🎯', 'label' => 'Add Quest', 'link' => 'quests.php?action=add'],
-    ['icon' => '👥', 'label' => 'Manage Users', 'link' => 'users.php']
+    ['icon' => '👥', 'label' => 'Manage Users', 'link' => 'users.php'],
+    ['icon' => '🏅', 'label' => 'Badges', 'link' => 'badges.php'],
+    ['icon' => '📈', 'label' => 'Reports', 'link' => 'reports.php'],
+    ['icon' => '💬', 'label' => 'Feedback', 'link' => 'feedback.php'],
+    ['icon' => '⚙️', 'label' => 'Settings', 'link' => 'settings.php']
 ];
 ?>
 
@@ -155,7 +159,7 @@ $quickActions = [
                 <div class="admin-card">
                     <div class="admin-card-header">
                         <h3>📋 Recent Activity</h3>
-                        <a href="#" class="view-all">View All</a>
+                        <a href="reports.php" class="view-all">View All</a>
                     </div>
                     <div class="admin-card-body">
                         <?php foreach ($recentActivities as $activity): ?>
