@@ -38,9 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
             loginPassword.type = this.checked ? "text" : "password";
         });
     }
-<<<<<<< Updated upstream
 });
-=======
 });
 /**
  * Dashboard JavaScript
@@ -941,6 +939,7 @@ window.showToast = showToast;
                 closeReplyModal();
             }
         });
+=======
 /**
  * Level 1 - Password Security
  * Interactive JavaScript for the learning level
@@ -1457,4 +1456,3 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-
