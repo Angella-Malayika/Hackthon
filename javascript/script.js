@@ -38,9 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
             loginPassword.type = this.checked ? "text" : "password";
         });
     }
-<<<<<<< Updated upstream
 });
-=======
 });
 /**
  * Dashboard JavaScript
@@ -941,4 +939,520 @@ window.showToast = showToast;
                 closeReplyModal();
             }
         });
->>>>>>> Stashed changes
+=======
+/**
+ * Level 1 - Password Security
+ * Interactive JavaScript for the learning level
+ */
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Initialize progress tracking
+    initProgressTracking();
+    
+    // Initialize option selection
+    initOptionSelection();
+    
+    // Initialize structured inputs
+    initStructuredInputs();
+    
+    // Initialize scroll to question
+    initScrollToQuestion();
+    
+    // Initialize keyboard shortcuts
+    initKeyboardShortcuts();
+    
+    // Show toast notification if exists
+    showToastIfExists();
+});
+
+/**
+ * Track progress through questions
+ */
+function initProgressTracking() {
+    const questions = document.querySelectorAll('.question-card');
+    const progressFill = document.getElementById('progressBar');
+    const progressLabel = document.getElementById('progressLabel');
+    const questionCounter = document.getElementById('questionCounter');
+    
+    if (!questions.length) return;
+    
+    // Update progress based on answered questions
+    function updateProgress() {
+        let answered = 0;
+        const total = questions.length;
+        
+        questions.forEach((q) => {
+            const radioInputs = q.querySelectorAll('input[type="radio"]');
+            const textInput = q.querySelector('input[type="text"]');
+            
+            if (radioInputs.length) {
+                let isChecked = false;
+                radioInputs.forEach(radio => {
+                    if (radio.checked) isChecked = true;
+                });
+                if (isChecked) answered++;
+            } else if (textInput) {
+                if (textInput.value.trim() !== '') answered++;
+            }
+        });
+        
+        const percentage = Math.round((answered / total) * 100);
+        if (progressFill) {
+            progressFill.style.width = percentage + '%';
+        }
+        if (progressLabel) {
+            progressLabel.textContent = percentage + '% Complete';
+        }
+        if (questionCounter) {
+            const nextQuestion = Math.min(answered + 1, total);
+            questionCounter.textContent = `Question ${nextQuestion} of ${total}`;
+        }
+    }
+    
+    // Listen for changes on all inputs
+    document.querySelectorAll('.question-card input').forEach(input => {
+        input.addEventListener('change', updateProgress);
+        input.addEventListener('input', updateProgress);
+    });
+    
+    // Initial update
+    setTimeout(updateProgress, 100);
+}
+
+/**
+ * Handle option selection with visual feedback
+ */
+function initOptionSelection() {
+    const options = document.querySelectorAll('.option');
+    
+    options.forEach(option => {
+        const radio = option.querySelector('input[type="radio"]');
+        if (!radio) return;
+        
+        // Click on the entire option container
+        option.addEventListener('click', function(e) {
+            // Don't trigger if clicking the radio directly (handled by browser)
+            if (e.target.tagName === 'INPUT') return;
+            
+            const radioInput = this.querySelector('input[type="radio"]');
+            if (radioInput) {
+                radioInput.checked = true;
+                // Trigger change event
+                const event = new Event('change', { bubbles: true });
+                radioInput.dispatchEvent(event);
+            }
+        });
+        
+        // Highlight selected option
+        radio.addEventListener('change', function() {
+            const parentOption = this.closest('.option');
+            const siblings = parentOption.closest('.options').querySelectorAll('.option');
+            
+            siblings.forEach(sibling => {
+                sibling.classList.remove('selected');
+            });
+            
+            if (this.checked) {
+                parentOption.classList.add('selected');
+            }
+            
+            // Scroll to next question if available
+            scrollToNextQuestion(parentOption);
+        });
+    });
+}
+
+/**
+ * Handle structured inputs with auto-save and validation
+ */
+function initStructuredInputs() {
+    const structuredInputs = document.querySelectorAll('.structured-input');
+    
+    structuredInputs.forEach(input => {
+        // Auto-save on input
+        input.addEventListener('input', function() {
+            // Show hint if answer is close
+            const parentCard = this.closest('.question-card');
+            const hint = parentCard?.querySelector('.hint');
+            
+            if (hint && this.value.length > 2) {
+                hint.style.color = '#03a60c';
+                hint.style.transition = 'color 0.3s';
+            } else if (hint) {
+                hint.style.color = '#888';
+            }
+            
+            // Update progress
+            const event = new Event('change', { bubbles: true });
+            this.dispatchEvent(event);
+        });
+        
+        // Enter key to move to next question
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && this.value.trim() !== '') {
+                e.preventDefault();
+                scrollToNextQuestion(this);
+            }
+        });
+        
+        // Focus effect
+        input.addEventListener('focus', function() {
+            this.parentElement?.querySelector('.hint')?.style.setProperty('color', '#03a60c', 'important');
+        });
+        
+        input.addEventListener('blur', function() {
+            const hint = this.parentElement?.querySelector('.hint');
+            if (hint && this.value.length <= 2) {
+                hint.style.color = '#888';
+            }
+        });
+    });
+}
+
+/**
+ * Scroll to the next unanswered question
+ */
+function initScrollToQuestion() {
+    // Find first unanswered question and scroll to it
+    const questions = document.querySelectorAll('.question-card');
+    const firstUnanswered = findFirstUnanswered(questions);
+    
+    if (firstUnanswered) {
+        // Scroll with offset for better visibility
+        setTimeout(() => {
+            firstUnanswered.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 500);
+    }
+}
+
+/**
+ * Find the first unanswered question
+ */
+function findFirstUnanswered(questions) {
+    for (const q of questions) {
+        const radioInputs = q.querySelectorAll('input[type="radio"]');
+        const textInput = q.querySelector('input[type="text"]');
+        let isAnswered = false;
+        
+        if (radioInputs.length) {
+            radioInputs.forEach(radio => {
+                if (radio.checked) isAnswered = true;
+            });
+        } else if (textInput) {
+            if (textInput.value.trim() !== '') isAnswered = true;
+        }
+        
+        if (!isAnswered) {
+            return q;
+        }
+    }
+    return null;
+}
+
+/**
+ * Scroll to the next question
+ */
+function scrollToNextQuestion(element) {
+    const parentCard = element.closest('.question-card');
+    if (!parentCard) return;
+    
+    // Check if current question is answered
+    const radioInputs = parentCard.querySelectorAll('input[type="radio"]');
+    const textInput = parentCard.querySelector('input[type="text"]');
+    let isAnswered = false;
+    
+    if (radioInputs.length) {
+        radioInputs.forEach(radio => {
+            if (radio.checked) isAnswered = true;
+        });
+    } else if (textInput) {
+        if (textInput.value.trim() !== '') isAnswered = true;
+    }
+    
+    if (isAnswered) {
+        const nextCard = parentCard.nextElementSibling;
+        if (nextCard && nextCard.classList.contains('question-card')) {
+            setTimeout(() => {
+                nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Focus on the first input in the next question
+                const nextInput = nextCard.querySelector('input');
+                if (nextInput) {
+                    setTimeout(() => nextInput.focus(), 500);
+                }
+            }, 300);
+        }
+    }
+}
+
+/**
+ * Keyboard shortcuts for better accessibility
+ */
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+Enter to submit form
+        if (e.ctrlKey && e.key === 'Enter') {
+            const submitBtn = document.querySelector('.btn-submit');
+            if (submitBtn) {
+                e.preventDefault();
+                submitBtn.click();
+            }
+        }
+        
+        // Escape to clear selection
+        if (e.key === 'Escape') {
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.tagName === 'INPUT') {
+                if (activeElement.type === 'radio') {
+                    activeElement.checked = false;
+                    const option = activeElement.closest('.option');
+                    if (option) {
+                        option.classList.remove('selected');
+                    }
+                }
+            }
+        }
+        
+        // Arrow keys for navigation
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            const inputs = document.querySelectorAll('.question-card input');
+            const currentIndex = Array.from(inputs).indexOf(document.activeElement);
+            
+            if (currentIndex !== -1) {
+                e.preventDefault();
+                const nextIndex = e.key === 'ArrowDown' ? 
+                    Math.min(currentIndex + 1, inputs.length - 1) : 
+                    Math.max(currentIndex - 1, 0);
+                inputs[nextIndex]?.focus();
+            }
+        }
+    });
+}
+
+/**
+ * Show toast notification if there's a message
+ */
+function showToastIfExists() {
+    const toast = document.querySelector('.toast-message');
+    if (toast) {
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.5s';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 500);
+        }, 5000);
+        
+        // Click to dismiss
+        toast.addEventListener('click', function() {
+            this.style.opacity = '0';
+            setTimeout(() => {
+                this.style.display = 'none';
+            }, 500);
+        });
+    }
+}
+
+/**
+ * Start the level (called from intro section)
+ */
+function startLevel() {
+    // Set session variable to start level
+    fetch('../api/start_level.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ level: 1 })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload the page to show the quiz
+            window.location.reload();
+        } else {
+            alert('Error starting level. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Fallback: just reload
+        window.location.reload();
+    });
+}
+
+/**
+ * Show a badge notification
+ */
+function showBadgeNotification(badgeName, badgeIcon) {
+    // Check if badge notification already exists
+    if (document.querySelector('.badge-unlock')) return;
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'badge-unlock';
+    overlay.innerHTML = `
+        <span class="badge-icon">${badgeIcon || '🏅'}</span>
+        <h2>🎉 New Badge Earned!</h2>
+        <p>You earned the <strong>${badgeName}</strong> badge!</p>
+        <button onclick="this.parentElement.remove()" style="
+            margin-top: 15px;
+            padding: 8px 25px;
+            background: #03a60c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        ">Awesome! 🎊</button>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (overlay.parentElement) {
+            overlay.style.opacity = '0';
+            overlay.style.transition = 'opacity 0.5s';
+            setTimeout(() => overlay.remove(), 500);
+        }
+    }, 5000);
+}
+
+/**
+ * Validate form before submission
+ */
+function validateForm() {
+    const questions = document.querySelectorAll('.question-card');
+    let allAnswered = true;
+    let firstUnanswered = null;
+    
+    questions.forEach(q => {
+        const radioInputs = q.querySelectorAll('input[type="radio"]');
+        const textInput = q.querySelector('input[type="text"]');
+        let isAnswered = false;
+        
+        if (radioInputs.length) {
+            radioInputs.forEach(radio => {
+                if (radio.checked) isAnswered = true;
+            });
+        } else if (textInput) {
+            if (textInput.value.trim() !== '') isAnswered = true;
+        }
+        
+        if (!isAnswered) {
+            allAnswered = false;
+            if (!firstUnanswered) firstUnanswered = q;
+        }
+    });
+    
+    if (!allAnswered) {
+        if (firstUnanswered) {
+            firstUnanswered.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstUnanswered.style.borderColor = '#dc3545';
+            setTimeout(() => {
+                firstUnanswered.style.borderColor = '#03a60c';
+            }, 3000);
+        }
+        alert('Please answer all questions before submitting!');
+        return false;
+    }
+    
+    return confirm('Are you sure you want to submit your answers?');
+}
+
+/**
+ * Check answer and show feedback
+ */
+function checkAnswer(questionId, correctAnswer) {
+    const input = document.querySelector(`[name="${questionId}"]`);
+    if (!input) return;
+    
+    let userAnswer = '';
+    if (input.type === 'radio') {
+        const checked = document.querySelector(`[name="${questionId}"]:checked`);
+        if (checked) userAnswer = checked.value;
+    } else {
+        userAnswer = input.value.trim().toLowerCase();
+    }
+    
+    if (!userAnswer) return false;
+    
+    // Check if answer is correct
+    let isCorrect = false;
+    if (input.type === 'radio') {
+        isCorrect = userAnswer === correctAnswer;
+    } else {
+        // For structured answers, check if any correct answer matches
+        const correctAnswers = Array.isArray(correctAnswer) ? correctAnswer : [correctAnswer];
+        isCorrect = correctAnswers.some(correct => 
+            userAnswer.includes(correct.toLowerCase()) || 
+            correct.toLowerCase().includes(userAnswer)
+        );
+    }
+    
+    // Show feedback
+    const feedback = document.createElement('div');
+    feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+    feedback.textContent = isCorrect ? '✅ Correct!' : '❌ Not quite right.';
+    feedback.style.cssText = `
+        margin-top: 10px;
+        padding: 8px 15px;
+        border-radius: 6px;
+        font-weight: 500;
+        ${isCorrect ? 'background: #d4edda; color: #155724;' : 'background: #f8d7da; color: #721c24;'}
+    `;
+    
+    // Remove existing feedback
+    const existingFeedback = input.closest('.question-card')?.querySelector('.feedback');
+    if (existingFeedback) existingFeedback.remove();
+    
+    input.closest('.question-card')?.appendChild(feedback);
+    
+    return isCorrect;
+}
+
+// Export functions for use in other scripts
+window.startLevel = startLevel;
+window.showBadgeNotification = showBadgeNotification;
+window.validateForm = validateForm;
+window.checkAnswer = checkAnswer;
+/**
+ * Start the level (called from intro section)
+ */
+function startLevel() {
+    // Simple approach: just reload the page with a flag to start
+    // Since we're using session variables, we can just set a flag and reload
+    
+    // Create a form to submit via POST
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = window.location.href;
+    
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'start_level';
+    hiddenInput.value = '1';
+    
+    form.appendChild(hiddenInput);
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Also add a direct click handler for the start button
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing code ...
+    
+    // Add direct click handler for start button
+    const startBtn = document.querySelector('.btn-start');
+    if (startBtn) {
+        // Remove any existing click listeners
+        const newStartBtn = startBtn.cloneNode(true);
+        startBtn.parentNode.replaceChild(newStartBtn, startBtn);
+        
+        newStartBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            startLevel();
+        });
+    }
+});

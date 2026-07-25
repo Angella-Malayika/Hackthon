@@ -48,11 +48,11 @@ if ($result->num_rows == 1) {
         // Redirect according to role
         if ($user['role'] == "admin") {
 
-            header("Location: ../admin/dashboard.php");
+            header("Location: ../admin/Dashboard.php");
             exit();
         } else {
 
-            header("Location: ../user/learn.php");
+            header("Location: ../user/dashboard.php");
             exit();
         }
     } else {
