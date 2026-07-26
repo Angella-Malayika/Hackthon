@@ -208,7 +208,7 @@ $shareLink = "https://" . $_SERVER['HTTP_HOST'] . "/hackthon/auth/register.php?r
                             📋 Copy Invitation Link
                         </button>
                         <p class="share-description">
-                            Share this link with friends. They will be redirected to the registration page.
+                            Share this link with friends.
                         </p>
                     </div>
                 </div>
