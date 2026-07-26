@@ -714,7 +714,6 @@ try {
 
     <!-- JavaScript -->
     <script src="../javascript/script.js"></script>
-    <script src="../assets/admin.js"></script>
     
     <script>
         // ============================================

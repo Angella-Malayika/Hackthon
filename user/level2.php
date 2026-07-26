@@ -121,6 +121,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_level2'])) {
             }
         }
 
+        // Log completion in lesson_progress (links this level to the dashboard's progress tracking)
+        $lessonRow = $conn->query("SELECT id FROM lessons WHERE title LIKE 'Level 2:%' LIMIT 1")->fetch_assoc();
+        if ($lessonRow) {
+            $lessonId = $lessonRow['id'];
+            $lpStmt = $conn->prepare("INSERT INTO lesson_progress (user_id, lesson_id, status, completed_at)
+                VALUES (?, ?, 'completed', NOW())
+                ON DUPLICATE KEY UPDATE status = 'completed', completed_at = NOW()");
+            $lpStmt->bind_param("ii", $user_id, $lessonId);
+            $lpStmt->execute();
+        }
+
         $message = "🎉 Great work! You scored $percentage% and earned $xpEarned XP! Level 3 is now unlocked.";
         $messageType = "success";
     } else {
@@ -150,11 +161,11 @@ if (isset($_SESSION['level2_completed']) && $_SESSION['level2_completed'] && iss
 <body>
     <?php require_once("../includes/sidebar.php"); ?>
     
-    <div class="level2-container">
+    <div class="level-container">
         <?php require_once("../includes/navbar.php"); ?>
         
-        <div class="level2-content">
-            <div class="level2-header">
+        <div class="level-content">
+            <div class="level-header">
                 <div class="header-left">
                     <h1>🧑‍💻 Level 2: Digital Citizenship</h1>
                     <p>Learn how to behave safely, respectfully, and responsibly online.</p>

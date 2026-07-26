@@ -45,6 +45,14 @@ if ($result->num_rows == 1) {
         $_SESSION['email'] = $user['email'];
         $_SESSION['role'] = $user['role'];
 
+        // Flag so the dashboard shows a one-time "Welcome back" toast
+        $_SESSION['just_logged_in'] = true;
+
+        // Record last login time
+        $updateLogin = $conn->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
+        $updateLogin->bind_param("i", $user['id']);
+        $updateLogin->execute();
+
         // Redirect according to role
         if ($user['role'] == "admin") {
 
@@ -52,7 +60,7 @@ if ($result->num_rows == 1) {
             exit();
         } else {
 
-            header("Location: ../user/learn.php");
+            header("Location: ../user/dashboard.php");
             exit();
         }
     } else {
