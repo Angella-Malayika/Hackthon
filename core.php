@@ -14,5 +14,14 @@ if ($conn->connect_error) {
 }
 $conn->set_charset('utf8mb4');
 
-// keep output quiet for included core file
+/*
+|--------------------------------------------------------------------------
+| Self-healing schema setup
+|--------------------------------------------------------------------------
+| Makes sure columns/tables the app code depends on always exist, even if
+| the imported .sql file is older than the code. Safe to run on every
+| request: every statement checks first before altering anything.
+*/
+require_once(__DIR__ . "/includes/schema_setup.php");
+ensure_schema($conn);
 ?>

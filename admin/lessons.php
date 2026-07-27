@@ -343,7 +343,6 @@ $totalCategories = $result->fetch_assoc()['total'] ?? 0;
 
     <!-- JavaScript -->
     <script src="../javascript/script.js"></script>
-    <script src="../assets/admin.js"></script>
     <script>
         // Auto-hide toast messages after 5 seconds
         setTimeout(function() {

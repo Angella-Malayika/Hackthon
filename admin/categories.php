@@ -220,7 +220,6 @@ foreach ($categories as $cat) {
 
     <!-- JavaScript -->
     <script src="../javascript/script.js"></script>
-    <script src="../assets/admin.js"></script>
     <script>
         // Auto-hide toast messages after 5 seconds
         setTimeout(function() {

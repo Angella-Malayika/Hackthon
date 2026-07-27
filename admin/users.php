@@ -259,8 +259,8 @@ $adminUsers = $result->fetch_assoc()['total'] ?? 0;
                                     </td>
                                     <td>
                                         <div class="action-buttons">
-                                            <!-- UPDATED: View button now points to user_form.php -->
-                                            <a href="user_form.php?action=view&id=<?php echo $user['id']; ?>" 
+                                            <!-- View button opens the full progress dashboard for this user -->
+                                            <a href="user_progress.php?id=<?php echo $user['id']; ?>" 
                                                class="action-btn view" title="View">
                                                 👁️ View
                                             </a>

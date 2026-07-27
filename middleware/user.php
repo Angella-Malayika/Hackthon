@@ -2,22 +2,9 @@
 
 require_once("auth.php");
 
-if($_SESSION['role'] != "user"){
+if(!isset($_SESSION['role']) || $_SESSION['role'] != "user"){
 
     header("Location: ../admin/dashboard.php");
     exit();
 
-}
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-if (empty($_SESSION['user_id'])) {
-    header("Location: ../auth/login.php");
-    exit();
-}
-
-if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
-    header("Location: ../admin/dashboard.php");
-    exit();
 }

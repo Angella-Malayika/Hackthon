@@ -19,27 +19,93 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Toggle Show/Hide on Signup Page
+    // Toggle Show/Hide on Signup Page (auto re-hides after a few seconds)
     if (signupCheckbox) {
-        signupCheckbox.addEventListener("change", function () {
-            const type = this.checked ? "text" : "password";
-            if (signupPassword) signupPassword.type = type;
-            if (confirmPassword) confirmPassword.type = type;
-        });
+        setupTemporaryPasswordReveal(signupCheckbox, [signupPassword, confirmPassword]);
     }
 
     // --- 2. LOGIN PAGE FUNCTIONALITY ---
     const loginPassword = document.getElementById("loginPassword");
     const loginCheckbox = document.getElementById("showLoginPassword");
 
-    // Toggle Show/Hide on Login Page
+    // Toggle Show/Hide on Login Page (auto re-hides after a few seconds)
     if (loginCheckbox && loginPassword) {
-        loginCheckbox.addEventListener("change", function () {
-            loginPassword.type = this.checked ? "text" : "password";
-        });
+        setupTemporaryPasswordReveal(loginCheckbox, [loginPassword]);
     }
+
+    // --- Generic show-password toggles anywhere else on the site ---
+    // Any checkbox with [data-toggle-password] reveals the password field(s)
+    // referenced in its data-target (comma separated ids), then auto-hides again.
+    document.querySelectorAll('[data-toggle-password]').forEach(function (checkbox) {
+        const targetIds = (checkbox.getAttribute('data-target') || '').split(',').map(s => s.trim()).filter(Boolean);
+        const fields = targetIds.map(id => document.getElementById(id)).filter(Boolean);
+        if (fields.length) {
+            setupTemporaryPasswordReveal(checkbox, fields);
+        }
+    });
+
+    // Show the "Welcome back" toast once per login session
+    showWelcomeToastIfFlagged();
 });
-});
+
+/**
+ * Wire a checkbox so that checking it reveals the given password field(s)
+ * as plain text, then automatically hides them again after a short delay
+ * (so the password is only visible "for a while"), unchecking the box too.
+ */
+function setupTemporaryPasswordReveal(checkbox, fields, revealMs) {
+    if (!checkbox || !fields || !fields.length) return;
+    const delay = revealMs || 4000;
+    let hideTimer = null;
+
+    checkbox.addEventListener('change', function () {
+        if (hideTimer) {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+        }
+
+        if (checkbox.checked) {
+            fields.forEach(f => { if (f) f.type = 'text'; });
+
+            hideTimer = setTimeout(function () {
+                fields.forEach(f => { if (f) f.type = 'password'; });
+                checkbox.checked = false;
+                hideTimer = null;
+            }, delay);
+        } else {
+            fields.forEach(f => { if (f) f.type = 'password'; });
+        }
+    });
+}
+
+/**
+ * Show a "Welcome back, {name}" toast on the dashboard right after login.
+ * The flag + name are injected into the page as data attributes on <body>
+ * (data-welcome="1" data-fullname="...") only on the request right after login.
+ */
+function showWelcomeToastIfFlagged() {
+    const body = document.body;
+    if (!body || body.getAttribute('data-welcome') !== '1') return;
+
+    const name = body.getAttribute('data-fullname') || 'there';
+
+    const toast = document.createElement('div');
+    toast.className = 'welcome-toast';
+    toast.innerHTML = `
+        <span class="wt-icon">👋</span>
+        <span>Welcome back, ${name}!</span>
+        <button class="wt-close" aria-label="Dismiss">&times;</button>
+    `;
+    document.body.appendChild(toast);
+
+    toast.querySelector('.wt-close').addEventListener('click', function () {
+        toast.remove();
+    });
+
+    setTimeout(function () {
+        if (toast.parentElement) toast.remove();
+    }, 6000);
+}
 /**
  * Dashboard JavaScript
  * Handles interactive elements on the dashboard
@@ -939,7 +1005,7 @@ window.showToast = showToast;
                 closeReplyModal();
             }
         });
-=======
+
 /**
  * Level 1 - Password Security
  * Interactive JavaScript for the learning level
@@ -1456,3 +1522,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+

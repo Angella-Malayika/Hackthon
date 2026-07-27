@@ -152,25 +152,7 @@ $quickActions = [
             <!-- Two Column Layout -->
             <div class="admin-grid-2col">
                 <!-- Recent Activity -->
-                <div class="admin-card">
-                    <div class="admin-card-header">
-                        <h3>📋 Recent Activity</h3>
-                        <a href="#" class="view-all">View All</a>
-                    </div>
-                    <div class="admin-card-body">
-                        <?php foreach ($recentActivities as $activity): ?>
-                        <div class="activity-item">
-                            <div class="activity-icon <?php echo $activity['icon_class']; ?>">
-                                <?php echo $activity['icon']; ?>
-                            </div>
-                            <div class="activity-content">
-                                <p><?php echo $activity['message']; ?></p>
-                                <small><?php echo $activity['time']; ?></small>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
+                
                 
                 <!-- Quick Actions -->
                 <div class="admin-card">
@@ -194,6 +176,5 @@ $quickActions = [
 
     <!-- JavaScript -->
     <script src="../javascript/script.js"></script>
-    <script src="../assets/admin.js"></script>
 </body>
 </html>

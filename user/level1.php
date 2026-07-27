@@ -51,11 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_level1'])) {
     
     // Correct answers for multiple choice (5 questions)
     $mcqAnswers = [
-        'q1' => 'c',
-        'q2' => 'b',
-        'q3' => 'c',
+        'q1' => 'a',
+        'q2' => 'c',
+        'q3' => 'b',
         'q4' => 'b',
-        'q5' => 'c'
+        'q5' => 'b'
     ];
     
     // Check MCQ answers
@@ -72,11 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_level1'])) {
     
     // Check structured answers (5 questions)
     $structuredAnswers = [
-        'q6' => ['password', 'passwords'],
-        'q7' => ['8', 'eight'],
-        'q8' => ['special', 'symbols', 'special characters'],
-        'q9' => ['two', '2', '2fa', 'two-factor'],
-        'q10' => ['manager', 'password manager']
+        'q6' => ['governance', 'shared principles', 'rules', 'standards', 'decision-making', 'internet governance'],
+        'q7' => ['government', 'governments', 'private', 'private sector', 'technical', 'technical community', 'civil society', 'academia', 'academic', 'international organisation', 'international organization'],
+        'q8' => ['internet protocol address', 'ip address', 'unique identifier', 'device address', 'address assigned'],
+        'q9' => ['internet service provider', 'isp'],
+        'q10' => ['education', 'communication', 'information', 'learning', 'business', 'commerce', 'innovation', 'entertainment', 'services', 'access']
     ];
     
     for ($i = 6; $i <= 10; $i++) {
@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_level1'])) {
     
     // Calculate percentage
     $percentage = round(($score / $totalQuestions) * 100);
-    $passMark = 70;
+    $passMark = 80;
     $passed = $percentage >= $passMark;
     
     // Save results
@@ -115,8 +115,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_level1'])) {
         // Update user XP
         $newXp = $xp + $xpEarned;
         
-        // Check if user should level up (every 100 XP)
-        $newLevel = floor($newXp / 100) + 1;
+        // Unlock Level 2 when the user passes Level 1
+        $newLevel = $currentLevel;
+        if ($currentLevel < 2) {
+            $newLevel = 2;
+        }
         
         $stmt = $conn->prepare("UPDATE users SET xp = ?, level = ? WHERE id = ?");
         $stmt->bind_param("iii", $newXp, $newLevel, $user_id);
@@ -124,7 +127,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_level1'])) {
         
         // Add badge if score is high
         if ($percentage >= 90) {
-            // Check if user already has this badge
             $badgeCheck = $conn->prepare("SELECT id FROM user_badges WHERE user_id = ? AND badge_id = 1");
             $badgeCheck->bind_param("i", $user_id);
             $badgeCheck->execute();
@@ -135,7 +137,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_level1'])) {
             }
         }
         
-        $message = "🎉 Congratulations! You scored $percentage% and earned $xpEarned XP!";
+        // Log completion in lesson_progress (links this level to the dashboard's progress tracking)
+        $lessonRow = $conn->query("SELECT id FROM lessons WHERE title LIKE 'Level 1:%' LIMIT 1")->fetch_assoc();
+        if ($lessonRow) {
+            $lessonId = $lessonRow['id'];
+            $lpStmt = $conn->prepare("INSERT INTO lesson_progress (user_id, lesson_id, status, completed_at)
+                VALUES (?, ?, 'completed', NOW())
+                ON DUPLICATE KEY UPDATE status = 'completed', completed_at = NOW()");
+            $lpStmt->bind_param("ii", $user_id, $lessonId);
+            $lpStmt->execute();
+        }
+
+        $message = "🎉 Congratulations! You scored $percentage% and earned $xpEarned XP! Level 2 is now unlocked.";
         $messageType = "success";
     } else {
         $message = "😅 You scored $percentage%. You need $passMark% to pass. Try again!";
@@ -160,24 +173,23 @@ if (isset($_SESSION['level1_completed']) && $_SESSION['level1_completed'] && iss
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Level 1 - Password Security</title>
+    <title>Level 1 - Internet Foundations</title>
     
     <!-- CSS -->
     <link rel="stylesheet" href="../assets/style.css">
-    <link rel="stylesheet" href="../assets/level1.css">
 </head>
 <body>
     <?php require_once("../includes/sidebar.php"); ?>
     
-    <div class="level1-container">
+    <div class="level-container">
         <?php require_once("../includes/navbar.php"); ?>
         
-        <div class="level1-content">
+        <div class="level-content">
             <!-- Header -->
-            <div class="level1-header">
+            <div class="level-header">
                 <div class="header-left">
-                    <h1>🔐 Level 1: Password Security</h1>
-                    <p>Learn how to create and manage strong passwords</p>
+                    <h1>🌐 Level 1: Internet Foundations</h1>
+                    <p>Understand the Internet, its governance, and how to use it responsibly.</p>
                 </div>
                 <div class="header-right">
                     <div class="level-badge">Level 1</div>
@@ -207,225 +219,280 @@ if (isset($_SESSION['level1_completed']) && $_SESSION['level1_completed'] && iss
             <!-- If not started, show intro -->
             <?php if (!$_SESSION['level1_started'] && !$_SESSION['level1_completed']): ?>
             <div class="intro-section">
-                <div class="intro-icon">🛡️</div>
-                <h2>Welcome to Password Security!</h2>
-                <p>In this level, you'll learn:</p>
+                <div class="intro-icon">🌐</div>
+                <h2>Welcome to Level 1: Internet Foundations</h2>
+                <p>In this level, you'll explore the Internet's purpose, history, governance, structure, benefits, and challenges.</p>
                 <ul class="intro-list">
-                    <li>✅ What makes a strong password</li>
-                    <li>✅ How to create memorable passwords</li>
-                    <li>✅ Why password managers are important</li>
-                    <li>✅ Two-factor authentication basics</li>
+                    <li>✅ Define the Internet and explain how it works</li>
+                    <li>✅ Learn the history and evolution of the Internet</li>
+                    <li>✅ Understand Internet Governance and its stakeholders</li>
+                    <li>✅ Recognise the benefits and challenges of the Internet</li>
+                    <li>✅ Appreciate responsible Internet use</li>
                 </ul>
-                <p style="margin-top: 20px; color: #666;">You'll answer 10 questions. You need 70% to pass and unlock Level 2!</p>
-                
-                <!-- FIXED: Using form instead of button with onclick -->
-                <form method="POST" action="" style="display: inline-block;">
-                    <input type="hidden" name="start_level" value="1">
-                    <button type="submit" class="btn-start">🚀 Start Level</button>
-                </form>
+                <p style="margin-top: 20px; color: #666;">Read the modules below, then complete the assessment. You need 80% to pass and unlock Level 2.</p>
             </div>
+
+            <div class="intro-section" style="text-align:left;">
+                <h2>Module 1: Introduction to the Internet</h2>
+                <p>The Internet is a global network of interconnected computers and devices that communicate using standard protocols. It connects millions of networks and allows people to share information, communicate, learn, and access services around the world.</p>
+                <h3>Key Points</h3>
+                <ul class="intro-list">
+                    <li>The Internet is a network of networks.</li>
+                    <li>It connects billions of devices globally.</li>
+                    <li>Information travels using Internet Protocol (IP).</li>
+                    <li>It enables communication and information sharing.</li>
+                </ul>
+
+                <h2>Module 2: History and Evolution of the Internet</h2>
+                <p>The Internet began in the late 1960s with the ARPANET research project. In 1983, the TCP/IP protocol became the standard, making it possible for different networks to communicate. In 1989, the World Wide Web was invented, making websites and hyperlinks easy to use.</p>
+                <p>Since then, the Internet has grown through broadband, smartphones, cloud computing, social media, and more.</p>
+                <h3>Timeline</h3>
+                <ul class="intro-list">
+                    <li><strong>1969</strong> – ARPANET established.</li>
+                    <li><strong>1983</strong> – TCP/IP adopted.</li>
+                    <li><strong>1989</strong> – World Wide Web invented.</li>
+                    <li><strong>1990s</strong> – Public Internet expands globally.</li>
+                    <li><strong>2000s</strong> – Social media and smartphones grow.</li>
+                    <li><strong>Today</strong> – AI, cloud computing, and IoT transform the Internet.</li>
+                </ul>
+
+                <h2>Module 3: Understanding Internet Governance</h2>
+                <p>Internet Governance covers the shared principles, rules, standards, and procedures used to manage the Internet. It ensures the Internet remains secure, open, stable, and accessible.</p>
+                <p>It addresses cybersecurity, privacy, domain name management, online freedom, and digital inclusion.</p>
+
+                <h2>Module 4: How the Internet Works</h2>
+                <p>Your device connects to an Internet Service Provider (ISP). DNS translates website names into IP addresses. Data travels through servers, routers, fibre optic cables, satellites, and wireless networks to deliver content.</p>
+                <p>Important components include ISPs, DNS, IP addresses, web servers, routers, cables, and wireless networks.</p>
+
+                <h2>Module 5: Stakeholders in Internet Governance</h2>
+                <p>Internet Governance uses a multi-stakeholder model. Different groups share responsibility.</p>
+                <ul class="intro-list">
+                    <li><strong>Governments</strong> – Create laws and policies for cybersecurity, privacy, and safety.</li>
+                    <li><strong>Private sector</strong> – Builds infrastructure, platforms, and digital services.</li>
+                    <li><strong>Technical community</strong> – Develops standards and keeps the network stable.</li>
+                    <li><strong>Civil society</strong> – Advocates for rights, inclusion, and responsible use.</li>
+                    <li><strong>Academic institutions</strong> – Deliver research, innovation, and policy guidance.</li>
+                    <li><strong>International organisations</strong> – Promote global cooperation and access.</li>
+                </ul>
+
+                <h2>Module 6: Benefits and Challenges of the Internet</h2>
+                <p>The Internet supports education, business, communication, healthcare, and innovation.</p>
+                <h3>Benefits</h3>
+                <ul class="intro-list">
+                    <li>Online learning and research.</li>
+                    <li>Global business and communication.</li>
+                    <li>Access to information and services.</li>
+                    <li>Innovation and entertainment.</li>
+                </ul>
+                <h3>Challenges</h3>
+                <ul class="intro-list">
+                    <li>Cybercrime and phishing attacks.</li>
+                    <li>Misinformation and scams.</li>
+                    <li>Privacy violations and data misuse.</li>
+                    <li>Digital inequality and screen addiction.</li>
+                </ul>
+
+                <h2>Module 7: Case Study</h2>
+                <p>A university adopted online learning and digital services. While learning improved, students faced phishing emails, fake scholarship websites, weak passwords, and misinformation. The university responded with awareness training, two-factor authentication, better password policies, and fact-checking guidance.</p>
+
+                <h2>Module 8: Level Summary</h2>
+                <p>In this level, you learned that the Internet is a global network, how it evolved, and why shared governance matters. You also learned how it works, who the stakeholders are, and the benefits and challenges of using it responsibly.</p>
+            </div>
+
+            <form method="POST" action="" style="display: inline-block; margin-top: 20px;">
+                <input type="hidden" name="start_level" value="1">
+                <button type="submit" class="btn-start">🚀 Start Level</button>
+            </form>
             <?php endif; ?>
             
-            <!-- Quiz Section -->
             <?php if ($_SESSION['level1_started'] && !$_SESSION['level1_completed']): ?>
             <form method="POST" action="" id="quizForm" class="quiz-form">
-                <!-- Question 1 - Multiple Choice -->
                 <div class="question-card" data-question="1">
                     <div class="question-header">
                         <span class="q-number">Question 1</span>
                         <span class="q-type">Multiple Choice</span>
                     </div>
-                    <h3>What is the minimum recommended length for a strong password?</h3>
+                    <h3>What is the Internet?</h3>
                     <div class="options">
                         <label class="option">
                             <input type="radio" name="q1" value="a">
-                            <span class="option-text">A. 6 characters</span>
+                            <span class="option-text">A. A global network of interconnected computers and devices</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q1" value="b">
-                            <span class="option-text">B. 8 characters</span>
+                            <span class="option-text">B. A single computer system</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q1" value="c">
-                            <span class="option-text">C. 12 characters</span>
+                            <span class="option-text">C. A type of social media platform</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q1" value="d">
-                            <span class="option-text">D. 4 characters</span>
+                            <span class="option-text">D. A computer virus</span>
                         </label>
                     </div>
                 </div>
-                
-                <!-- Question 2 - Multiple Choice -->
+
                 <div class="question-card" data-question="2">
                     <div class="question-header">
                         <span class="q-number">Question 2</span>
                         <span class="q-type">Multiple Choice</span>
                     </div>
-                    <h3>Which of the following is the strongest password?</h3>
+                    <h3>In which year was TCP/IP adopted as the standard protocol?</h3>
                     <div class="options">
                         <label class="option">
                             <input type="radio" name="q2" value="a">
-                            <span class="option-text">A. password123</span>
+                            <span class="option-text">A. 1969</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q2" value="b">
-                            <span class="option-text">B. P@ssw0rd!2024</span>
+                            <span class="option-text">B. 1989</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q2" value="c">
-                            <span class="option-text">C. 12345678</span>
+                            <span class="option-text">C. 1983</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q2" value="d">
-                            <span class="option-text">D. qwerty</span>
+                            <span class="option-text">D. 2000</span>
                         </label>
                     </div>
                 </div>
-                
-                <!-- Question 3 - Multiple Choice -->
+
                 <div class="question-card" data-question="3">
                     <div class="question-header">
                         <span class="q-number">Question 3</span>
                         <span class="q-type">Multiple Choice</span>
                     </div>
-                    <h3>What is a password manager?</h3>
+                    <h3>Who invented the World Wide Web?</h3>
                     <div class="options">
                         <label class="option">
                             <input type="radio" name="q3" value="a">
-                            <span class="option-text">A. A tool that hacks passwords</span>
+                            <span class="option-text">A. Vint Cerf</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q3" value="b">
-                            <span class="option-text">B. A website that stores passwords</span>
+                            <span class="option-text">B. Sir Tim Berners-Lee</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q3" value="c">
-                            <span class="option-text">C. A tool that creates and stores strong passwords</span>
+                            <span class="option-text">C. Bill Gates</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q3" value="d">
-                            <span class="option-text">D. A type of virus</span>
+                            <span class="option-text">D. Mark Zuckerberg</span>
                         </label>
                     </div>
                 </div>
-                
-                <!-- Question 4 - Multiple Choice -->
+
                 <div class="question-card" data-question="4">
                     <div class="question-header">
                         <span class="q-number">Question 4</span>
                         <span class="q-type">Multiple Choice</span>
                     </div>
-                    <h3>What is two-factor authentication (2FA)?</h3>
+                    <h3>What does DNS do?</h3>
                     <div class="options">
                         <label class="option">
                             <input type="radio" name="q4" value="a">
-                            <span class="option-text">A. Using two different passwords</span>
+                            <span class="option-text">A. Stores website passwords</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q4" value="b">
-                            <span class="option-text">B. A second verification step like a code</span>
+                            <span class="option-text">B. Translates domain names into IP addresses</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q4" value="c">
-                            <span class="option-text">C. Two-factor login</span>
+                            <span class="option-text">C. Creates domain names</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q4" value="d">
-                            <span class="option-text">D. A type of password</span>
+                            <span class="option-text">D. Blocks unsafe websites</span>
                         </label>
                     </div>
                 </div>
-                
-                <!-- Question 5 - Multiple Choice -->
+
                 <div class="question-card" data-question="5">
                     <div class="question-header">
                         <span class="q-number">Question 5</span>
                         <span class="q-type">Multiple Choice</span>
                     </div>
-                    <h3>How often should you change your passwords?</h3>
+                    <h3>Which of the following is a major challenge of the Internet?</h3>
                     <div class="options">
                         <label class="option">
                             <input type="radio" name="q5" value="a">
-                            <span class="option-text">A. Never</span>
+                            <span class="option-text">A. Fast downloads</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q5" value="b">
-                            <span class="option-text">B. Every week</span>
+                            <span class="option-text">B. Cybersecurity threats</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q5" value="c">
-                            <span class="option-text">C. Every 3-6 months or if compromised</span>
+                            <span class="option-text">C. Free email</span>
                         </label>
                         <label class="option">
                             <input type="radio" name="q5" value="d">
-                            <span class="option-text">D. Every day</span>
+                            <span class="option-text">D. Online education</span>
                         </label>
                     </div>
                 </div>
-                
-                <!-- Question 6 - Structured -->
+
                 <div class="question-card" data-question="6">
                     <div class="question-header">
                         <span class="q-number">Question 6</span>
                         <span class="q-type">Structured Answer</span>
                     </div>
-                    <h3>What word describes a strong password that is easy to remember?</h3>
-                    <p class="hint">Hint: It's a combination of random words.</p>
+                    <h3>What is Internet Governance?</h3>
+                    <p class="hint">Hint: It is about rules, standards, and shared decision-making.</p>
                     <input type="text" class="structured-input" name="q6" placeholder="Type your answer...">
                 </div>
-                
-                <!-- Question 7 - Structured -->
+
                 <div class="question-card" data-question="7">
                     <div class="question-header">
                         <span class="q-number">Question 7</span>
                         <span class="q-type">Structured Answer</span>
                     </div>
-                    <h3>What is the minimum number of characters recommended for a secure password?</h3>
-                    <p class="hint">Hint: It's a number between 8 and 15.</p>
+                    <h3>Name one major stakeholder in Internet Governance.</h3>
+                    <p class="hint">Hint: Examples include governments, private sector, or civil society.</p>
                     <input type="text" class="structured-input" name="q7" placeholder="Type your answer...">
                 </div>
-                
-                <!-- Question 8 - Structured -->
+
                 <div class="question-card" data-question="8">
                     <div class="question-header">
                         <span class="q-number">Question 8</span>
                         <span class="q-type">Structured Answer</span>
                     </div>
-                    <h3>What type of characters should you include in a strong password?</h3>
-                    <p class="hint">Hint: Think about symbols and numbers.</p>
+                    <h3>What is an IP address?</h3>
+                    <p class="hint">Hint: It is a unique address for a device on the Internet.</p>
                     <input type="text" class="structured-input" name="q8" placeholder="Type your answer...">
                 </div>
-                
-                <!-- Question 9 - Structured -->
+
                 <div class="question-card" data-question="9">
                     <div class="question-header">
                         <span class="q-number">Question 9</span>
                         <span class="q-type">Structured Answer</span>
                     </div>
-                    <h3>What is the name of the security feature that requires two verification steps?</h3>
-                    <p class="hint">Hint: It's often abbreviated as 2FA.</p>
+                    <h3>What does ISP stand for?</h3>
+                    <p class="hint">Hint: It provides access to the Internet.</p>
                     <input type="text" class="structured-input" name="q9" placeholder="Type your answer...">
                 </div>
-                
-                <!-- Question 10 - Structured -->
+
                 <div class="question-card" data-question="10">
                     <div class="question-header">
                         <span class="q-number">Question 10</span>
                         <span class="q-type">Structured Answer</span>
                     </div>
-                    <h3>What tool helps you generate and store strong passwords securely?</h3>
-                    <p class="hint">Hint: It stores all your passwords in one place.</p>
+                    <h3>Give one benefit of the Internet.</h3>
+                    <p class="hint">Hint: It may help with education, communication, or business.</p>
                     <input type="text" class="structured-input" name="q10" placeholder="Type your answer...">
                 </div>
-                
+
                 <div class="form-actions">
                     <button type="submit" name="submit_level1" class="btn-submit">📤 Submit Answers</button>
                 </div>
             </form>
             <?php endif; ?>
             
-            <!-- Results Section -->
             <?php if ($_SESSION['level1_completed'] && isset($_SESSION['level1_passed'])): ?>
             <div class="results-section <?php echo $_SESSION['level1_passed'] ? 'passed' : 'failed'; ?>">
                 <div class="results-icon">
@@ -442,7 +509,7 @@ if (isset($_SESSION['level1_completed']) && $_SESSION['level1_completed'] && iss
                     <p class="success-message">🌟 Level 2 is now unlocked! You earned <?php echo 50 + ($_SESSION['level1_score'] * 5); ?> XP!</p>
                     <p style="color: #999; font-size: 14px;">Redirecting to Learn page in 5 seconds...</p>
                 <?php else: ?>
-                    <p class="error-message">You need 70% to pass. Please try again.</p>
+                    <p class="error-message">You need 80% to pass. Please try again.</p>
                     <button class="btn-retry" onclick="location.reload()">🔄 Try Again</button>
                 <?php endif; ?>
             </div>
@@ -450,7 +517,8 @@ if (isset($_SESSION['level1_completed']) && $_SESSION['level1_completed'] && iss
         </div>
     </div>
 
-    <!-- JavaScript -->
     <script src="../javascript/script.js"></script>
 </body>
 </html>
+
+
