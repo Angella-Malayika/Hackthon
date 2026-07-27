@@ -5,11 +5,6 @@ require_once("../core.php");
 // Logged in user
 $user_id = $_SESSION['user_id'];
 
-/*
-|--------------------------------------------------------------------------
-| Dashboard Statistics
-|--------------------------------------------------------------------------
-*/
 
 // Total published lessons
 $sqlLessons = "SELECT COUNT(*) AS total FROM lessons WHERE status='published'";
