@@ -45,8 +45,53 @@ function index_exists(mysqli $conn, string $table, string $indexName): bool
     return $count > 0;
 }
 
+/**
+ * Ensures every column in $columns exists on $table, adding any that are
+ * missing. Handles the case where a table was already created previously
+ * (by an older version of this code, or a partial/failed run) with a
+ * different structure than what the current code expects.
+ *
+ * $columns: [ 'column_name' => 'SQL type/definition', ... ]
+ */
+function ensure_columns(mysqli $conn, string $table, array $columns): void
+{
+    if (!table_exists($conn, $table)) {
+        return;
+    }
+    foreach ($columns as $column => $definition) {
+        if (!column_exists($conn, $table, $column)) {
+            $conn->query("ALTER TABLE `$table` ADD COLUMN `$column` $definition");
+        }
+    }
+}
+
 function ensure_schema(mysqli $conn): void
 {
+    // ---------------------------------------------------------------
+    // 0. users table - columns used by profile.php / achievements.php.
+    //    Older installs of this project may predate these columns.
+    // ---------------------------------------------------------------
+    if (table_exists($conn, 'users')) {
+        if (!column_exists($conn, 'users', 'experience')) {
+            $conn->query("ALTER TABLE users ADD COLUMN experience TEXT NULL");
+        }
+        if (!column_exists($conn, 'users', 'profile_picture')) {
+            $conn->query("ALTER TABLE users ADD COLUMN profile_picture VARCHAR(255) DEFAULT 'default.png'");
+        }
+        if (!column_exists($conn, 'users', 'program')) {
+            $conn->query("ALTER TABLE users ADD COLUMN program ENUM('Week','Weekend') NOT NULL DEFAULT 'Week'");
+        }
+        if (!column_exists($conn, 'users', 'date_joined')) {
+            $conn->query("ALTER TABLE users ADD COLUMN date_joined TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP");
+        }
+        if (!column_exists($conn, 'users', 'xp')) {
+            $conn->query("ALTER TABLE users ADD COLUMN xp INT DEFAULT 0");
+        }
+        if (!column_exists($conn, 'users', 'level')) {
+            $conn->query("ALTER TABLE users ADD COLUMN level INT DEFAULT 1");
+        }
+    }
+
     // ---------------------------------------------------------------
     // 1. feedback table - reply workflow columns used by admin/feedback.php
     // ---------------------------------------------------------------
@@ -183,14 +228,14 @@ function ensure_schema(mysqli $conn): void
     // ---------------------------------------------------------------
     if (table_exists($conn, 'badges')) {
         $badgeDefs = [
-            1 => ['Foundations Star', '🌐', 'Score 90%+ on Level 1'],
-            2 => ['Digital Citizen', '🧑‍💻', 'Score 90%+ on Level 2'],
-            3 => ['Privacy Guardian', '🔒', 'Score 90%+ on Level 3'],
-            4 => ['Cyber Defender', '🛡️', 'Score 90%+ on Level 4'],
-            5 => ['Social Savvy', '📱', 'Score 90%+ on Level 5'],
-            6 => ['Fact Checker', '🔍', 'Score 90%+ on Level 6'],
-            7 => ['Governance Guru', '🏛️', 'Score 90%+ on Level 7'],
-            8 => ['Digital Rights Champion', '⚖️', 'Score 90%+ on Level 8'],
+            1 => ['Foundations Star', '🌐', 'Score 70%+ on Level 1'],
+            2 => ['Digital Citizen', '🧑‍💻', 'Score 70%+ on Level 2'],
+            3 => ['Privacy Guardian', '🔒', 'Score 70%+ on Level 3'],
+            4 => ['Cyber Defender', '🛡️', 'Score 70%+ on Level 4'],
+            5 => ['Social Savvy', '📱', 'Score 70%+ on Level 5'],
+            6 => ['Fact Checker', '🔍', 'Score 70%+ on Level 6'],
+            7 => ['Governance Guru', '🏛️', 'Score 70%+ on Level 7'],
+            8 => ['Digital Rights Champion', '⚖️', 'Score 75%+ on Level 8'],
         ];
         $maxId = $conn->query("SELECT MAX(id) AS m FROM badges")->fetch_assoc()['m'] ?? 0;
         foreach ($badgeDefs as $id => [$name, $icon, $req]) {
@@ -222,5 +267,235 @@ function ensure_schema(mysqli $conn): void
             $stmt->bind_param("ss", $defaultEmail, $hashed);
             $stmt->execute();
         }
+    }
+
+    // ---------------------------------------------------------------
+    // 7. lesson_progress.score - stores the % scored on a level's
+    //    assessment, used for "perfect score" achievements and reporting.
+    // ---------------------------------------------------------------
+    if (table_exists($conn, 'lesson_progress') && !column_exists($conn, 'lesson_progress', 'score')) {
+        $conn->query("ALTER TABLE lesson_progress ADD COLUMN score INT NULL AFTER status");
+    }
+
+    // ---------------------------------------------------------------
+    // 8. quest_progress - tracks the 8-level Quest challenge (deep-dive
+    //    content + 10 objectives + scenario) shown on user/quests.php.
+    //    Separate from the legacy `quests`/`user_quests` bonus-quest system.
+    // ---------------------------------------------------------------
+    if (!table_exists($conn, 'quest_progress')) {
+        $conn->query("
+            CREATE TABLE quest_progress (
+                id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                quest_level INT NOT NULL,
+                status ENUM('in_progress','completed') DEFAULT 'in_progress',
+                score INT NULL,
+                completed_at DATETIME NULL,
+                UNIQUE KEY uniq_user_questlevel (user_id, quest_level),
+                KEY user_id (user_id),
+                CONSTRAINT quest_progress_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+        ");
+    }
+    ensure_columns($conn, 'quest_progress', [
+        'quest_level'   => "INT NOT NULL DEFAULT 1",
+        'status'        => "ENUM('in_progress','completed') DEFAULT 'in_progress'",
+        'score'         => "INT NULL",
+        'completed_at'  => "DATETIME NULL",
+    ]);
+
+    // ---------------------------------------------------------------
+    // 9. Achievements system - catalog table, per-user unlock tracking,
+    //    and the rolling 24h daily-challenge assignment table.
+    // ---------------------------------------------------------------
+    if (!table_exists($conn, 'achievements')) {
+        $conn->query("
+            CREATE TABLE achievements (
+                id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(150) NOT NULL,
+                description VARCHAR(255) NOT NULL,
+                icon VARCHAR(10) DEFAULT '🏆',
+                criteria_type VARCHAR(50) NOT NULL,
+                criteria_value INT NOT NULL DEFAULT 1,
+                difficulty ENUM('easy','medium','hard','epic') DEFAULT 'easy',
+                xp_reward INT NOT NULL DEFAULT 15,
+                is_daily_eligible TINYINT(1) DEFAULT 1,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+        ");
+    }
+    ensure_columns($conn, 'achievements', [
+        'title'             => "VARCHAR(150) NOT NULL DEFAULT ''",
+        'description'       => "VARCHAR(255) NOT NULL DEFAULT ''",
+        'icon'              => "VARCHAR(10) DEFAULT '🏆'",
+        'criteria_type'     => "VARCHAR(50) NOT NULL DEFAULT ''",
+        'criteria_value'    => "INT NOT NULL DEFAULT 1",
+        'difficulty'        => "ENUM('easy','medium','hard','epic') DEFAULT 'easy'",
+        'xp_reward'         => "INT NOT NULL DEFAULT 15",
+        'is_daily_eligible' => "TINYINT(1) DEFAULT 1",
+        'created_at'        => "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP",
+    ]);
+
+    if (!table_exists($conn, 'user_achievements')) {
+        $conn->query("
+            CREATE TABLE user_achievements (
+                id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                achievement_id INT NOT NULL,
+                status ENUM('locked','completed') DEFAULT 'locked',
+                completed_at DATETIME NULL,
+                UNIQUE KEY uniq_user_achievement (user_id, achievement_id),
+                KEY user_id (user_id),
+                KEY achievement_id (achievement_id),
+                CONSTRAINT user_achievements_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+                CONSTRAINT user_achievements_ibfk_2 FOREIGN KEY (achievement_id) REFERENCES achievements (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+        ");
+    }
+    ensure_columns($conn, 'user_achievements', [
+        'achievement_id' => "INT NOT NULL DEFAULT 0",
+        'status'         => "ENUM('locked','completed') DEFAULT 'locked'",
+        'completed_at'   => "DATETIME NULL",
+    ]);
+
+    if (!table_exists($conn, 'user_daily_challenges')) {
+        $conn->query("
+            CREATE TABLE user_daily_challenges (
+                id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                achievement_id INT NOT NULL,
+                assigned_at DATETIME NOT NULL,
+                KEY user_id (user_id),
+                KEY achievement_id (achievement_id),
+                CONSTRAINT user_daily_challenges_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+                CONSTRAINT user_daily_challenges_ibfk_2 FOREIGN KEY (achievement_id) REFERENCES achievements (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+        ");
+    }
+    ensure_columns($conn, 'user_daily_challenges', [
+        'achievement_id' => "INT NOT NULL DEFAULT 0",
+        'assigned_at'    => "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+    ]);
+
+    if (table_exists($conn, 'achievements')) {
+        $achCount = $conn->query("SELECT COUNT(*) AS c FROM achievements")->fetch_assoc()['c'] ?? 0;
+        if ($achCount == 0) {
+            seed_achievements($conn);
+        }
+    }
+}
+
+/**
+ * Generates exactly 100 achievements spread across every stat the
+ * platform tracks (lessons, quest levels, XP, badges, certificates,
+ * profile completeness, feedback, friends, perfect scores, and account
+ * age), with difficulty and XP reward scaled to how hard each is to reach.
+ */
+function seed_achievements(mysqli $conn): void
+{
+    $difficultyXp = ['easy' => 15, 'medium' => 30, 'hard' => 60, 'epic' => 120];
+
+    // Assigns a difficulty based on position within the ordered threshold list.
+    $bucket = function (int $index, int $total): string {
+        if ($index === $total - 1) return 'epic';
+        if ($index >= $total * 0.66) return 'hard';
+        if ($index >= $total * 0.33) return 'medium';
+        return 'easy';
+    };
+
+    $defs = []; // [title, description, icon, criteria_type, criteria_value, difficulty]
+
+    // 1) Lessons completed (8 max - one per level)
+    $lessonNames = [
+        1 => 'First Lesson Down', 2 => 'Building Momentum', 3 => 'Halfway Learner',
+        4 => 'Steady Scholar', 5 => 'Deep Diver', 6 => 'Almost There',
+        7 => 'One To Go', 8 => 'Course Completionist',
+    ];
+    $thresholds = range(1, 8);
+    foreach ($thresholds as $i => $t) {
+        $defs[] = [$lessonNames[$t], "Complete $t lesson" . ($t > 1 ? 's' : '') . " in your Learning Journey.", '📘', 'lessons_completed', $t, $bucket($i, count($thresholds))];
+    }
+
+    // 2) Quest levels completed (8 max)
+    $thresholds = range(1, 8);
+    foreach ($thresholds as $i => $t) {
+        $defs[] = ["Quest Rank $t", "Pass $t Quest level" . ($t > 1 ? 's' : '') . " with a scenario score of 80%+.", '🧭', 'quest_levels_completed', $t, $bucket($i, count($thresholds))];
+    }
+
+    // 3) Legacy bonus quests completed
+    $thresholds = [1, 2, 3, 5];
+    foreach ($thresholds as $i => $t) {
+        $defs[] = ["Bonus Hunter $t", "Complete $t bonus quest" . ($t > 1 ? 's' : '') . " from the community board.", '🎯', 'legacy_quests_completed', $t, $bucket($i, count($thresholds))];
+    }
+
+    // 4) Level reached (account level 1-8)
+    $levelNames = [
+        1 => 'Explorer', 2 => 'Digital Citizen', 3 => 'Privacy Guardian', 4 => 'Cyber Defender',
+        5 => 'Social Savvy', 6 => 'Fact Checker', 7 => 'Governance Guru', 8 => 'Digital Rights Champion',
+    ];
+    $thresholds = range(1, 8);
+    foreach ($thresholds as $i => $t) {
+        $defs[] = ["$levelNames[$t]", "Reach Level $t on the platform.", '⭐', 'level_reached', $t, $bucket($i, count($thresholds))];
+    }
+
+    // 5) XP total milestones
+    $thresholds = [10, 25, 50, 75, 100, 150, 200, 300, 400, 500, 650, 800, 1000, 1250, 1500, 1750, 2000, 2500, 3000, 4000, 5000, 7500];
+    foreach ($thresholds as $i => $t) {
+        $defs[] = ["Earn $t XP", "Accumulate a total of $t experience points.", '⚡', 'xp_total', $t, $bucket($i, count($thresholds))];
+    }
+
+    // 6) Badges earned (8 max - one per level badge)
+    $thresholds = range(1, 8);
+    foreach ($thresholds as $i => $t) {
+        $defs[] = ["Badge Collector $t", "Earn $t badge" . ($t > 1 ? 's' : '') . " by scoring 90%+ on level assessments.", '🏅', 'badges_earned', $t, $bucket($i, count($thresholds))];
+    }
+
+    // 7) Certificates earned
+    $defs[] = ['Certified!', 'Complete the full 8-level course and earn your certificate.', '📜', 'certificates_earned', 1, 'epic'];
+
+    // 8) Profile completeness
+    $defs[] = ['Say Cheese', 'Upload a profile picture.', '🖼️', 'profile_photo_uploaded', 1, 'easy'];
+    $defs[] = ['Tell Your Story', 'Fill in your experience on your profile.', '✍️', 'profile_experience_filled', 1, 'easy'];
+
+    // 9) Feedback submitted
+    $thresholds = [1, 2, 3, 5, 8, 12, 20];
+    foreach ($thresholds as $i => $t) {
+        $defs[] = ["Voice Heard x$t", "Submit $t piece" . ($t > 1 ? 's' : '') . " of feedback to help improve the platform.", '💬', 'feedback_submitted', $t, $bucket($i, count($thresholds))];
+    }
+
+    // 10) Friends accepted
+    $thresholds = [1, 2, 3, 4, 5, 7, 10, 15, 20, 25];
+    foreach ($thresholds as $i => $t) {
+        $defs[] = ["Social Circle $t", "Connect with $t friend" . ($t > 1 ? 's' : '') . " on the platform.", '🤝', 'friends_accepted', $t, $bucket($i, count($thresholds))];
+    }
+
+    // 11) Perfect scores (100% on a level assessment)
+    $thresholds = range(1, 8);
+    foreach ($thresholds as $i => $t) {
+        $defs[] = ["Flawless x$t", "Score a perfect 100% on $t level assessment" . ($t > 1 ? 's' : '') . ".", '💯', 'perfect_scores', $t, $bucket($i, count($thresholds))];
+    }
+
+    // 12) Account age / loyalty
+    $thresholds = [1, 3, 7, 14, 21, 30, 45, 60, 90, 120, 150, 180, 365];
+    $ageNames = [1 => 'Day One', 3 => 'Getting Settled', 7 => 'One Week In', 14 => 'Two Weeks Strong'];
+    foreach ($thresholds as $i => $t) {
+        $label = $ageNames[$t] ?? "Loyal Member ({$t}d)";
+        $defs[] = [$label, "Stay part of the platform for $t day" . ($t > 1 ? 's' : '') . ".", '🗓️', 'account_age_days', $t, $bucket($i, count($thresholds))];
+    }
+
+    // 13) Welcome achievement - unlocks for everyone immediately
+    $defs[] = ['Welcome Aboard!', 'Create your account and begin your Internet Governance journey.', '🎉', 'always_true', 1, 'easy'];
+
+    // Trim/pad to exactly 100 so the catalog is predictable.
+    $defs = array_slice($defs, 0, 100);
+
+    $stmt = $conn->prepare("
+        INSERT INTO achievements (title, description, icon, criteria_type, criteria_value, difficulty, xp_reward, is_daily_eligible)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+    ");
+    foreach ($defs as [$title, $desc, $icon, $type, $value, $difficulty]) {
+        $xp = $difficultyXp[$difficulty];
+        $stmt->bind_param("ssssisi", $title, $desc, $icon, $type, $value, $difficulty, $xp);
+        $stmt->execute();
     }
 }

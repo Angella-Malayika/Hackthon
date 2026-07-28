@@ -1,6 +1,8 @@
 <?php
 require_once("../middleware/user.php");
 require_once("../core.php");
+require_once("../includes/grading.php");
+require_once("../includes/achievements.php");
 
 $user_id = $_SESSION['user_id'];
 
@@ -85,11 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_level1'])) {
             $userAnswer = strtolower(trim($_POST[$questionKey]));
             $answers[$questionKey] = $userAnswer;
             if (isset($structuredAnswers[$questionKey])) {
-                foreach ($structuredAnswers[$questionKey] as $correct) {
-                    if (strpos($userAnswer, $correct) !== false) {
-                        $score++;
-                        break;
-                    }
+                if (is_close_answer($userAnswer, $structuredAnswers[$questionKey])) {
+                    $score++;
                 }
             }
         }
@@ -97,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_level1'])) {
     
     // Calculate percentage
     $percentage = round(($score / $totalQuestions) * 100);
-    $passMark = 80;
+    $passMark = 70;
     $passed = $percentage >= $passMark;
     
     // Save results
@@ -146,7 +145,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_level1'])) {
                 ON DUPLICATE KEY UPDATE status = 'completed', completed_at = NOW()");
             $lpStmt->bind_param("ii", $user_id, $lessonId);
             $lpStmt->execute();
+            $scoreStmt = $conn->prepare("UPDATE lesson_progress SET score = ? WHERE user_id = ? AND lesson_id = ?");
+            $scoreStmt->bind_param("iii", $percentage, $user_id, $lessonId);
+            $scoreStmt->execute();
         }
+
+        // Evaluate achievements (lesson/level completion, XP, badges, etc.) and award XP for any newly unlocked ones
+        evaluate_achievements($conn, $user_id);
 
         $message = "🎉 Congratulations! You scored $percentage% and earned $xpEarned XP! Level 2 is now unlocked.";
         $messageType = "success";
@@ -211,7 +216,7 @@ if (isset($_SESSION['level1_completed']) && $_SESSION['level1_completed'] && iss
             <!-- Display Message -->
             <?php if ($message): ?>
             <div class="toast-message <?php echo $messageType; ?>">
-                <span><?php echo $messageType == 'success' ? '✅' : '😅'; ?></span>
+                <span><?php echo $messageType == 'success' ? '✅' : ''; ?></span>
                 <?php echo $message; ?>
             </div>
             <?php endif; ?>
@@ -229,7 +234,7 @@ if (isset($_SESSION['level1_completed']) && $_SESSION['level1_completed'] && iss
                     <li>✅ Recognise the benefits and challenges of the Internet</li>
                     <li>✅ Appreciate responsible Internet use</li>
                 </ul>
-                <p style="margin-top: 20px; color: #666;">Read the modules below, then complete the assessment. You need 80% to pass and unlock Level 2.</p>
+                <p style="margin-top: 20px; color: #666;">Read the modules below, then complete the assessment. You need 70% to pass and unlock Level 2.</p>
             </div>
 
             <div class="intro-section" style="text-align:left;">
@@ -301,7 +306,7 @@ if (isset($_SESSION['level1_completed']) && $_SESSION['level1_completed'] && iss
 
             <form method="POST" action="" style="display: inline-block; margin-top: 20px;">
                 <input type="hidden" name="start_level" value="1">
-                <button type="submit" class="btn-start">🚀 Start Level</button>
+                <button type="submit" class="btn-start"> Start Level</button>
             </form>
             <?php endif; ?>
             
@@ -443,7 +448,6 @@ if (isset($_SESSION['level1_completed']) && $_SESSION['level1_completed'] && iss
                         <span class="q-type">Structured Answer</span>
                     </div>
                     <h3>What is Internet Governance?</h3>
-                    <p class="hint">Hint: It is about rules, standards, and shared decision-making.</p>
                     <input type="text" class="structured-input" name="q6" placeholder="Type your answer...">
                 </div>
 
@@ -453,7 +457,6 @@ if (isset($_SESSION['level1_completed']) && $_SESSION['level1_completed'] && iss
                         <span class="q-type">Structured Answer</span>
                     </div>
                     <h3>Name one major stakeholder in Internet Governance.</h3>
-                    <p class="hint">Hint: Examples include governments, private sector, or civil society.</p>
                     <input type="text" class="structured-input" name="q7" placeholder="Type your answer...">
                 </div>
 
@@ -463,7 +466,6 @@ if (isset($_SESSION['level1_completed']) && $_SESSION['level1_completed'] && iss
                         <span class="q-type">Structured Answer</span>
                     </div>
                     <h3>What is an IP address?</h3>
-                    <p class="hint">Hint: It is a unique address for a device on the Internet.</p>
                     <input type="text" class="structured-input" name="q8" placeholder="Type your answer...">
                 </div>
 
@@ -473,7 +475,6 @@ if (isset($_SESSION['level1_completed']) && $_SESSION['level1_completed'] && iss
                         <span class="q-type">Structured Answer</span>
                     </div>
                     <h3>What does ISP stand for?</h3>
-                    <p class="hint">Hint: It provides access to the Internet.</p>
                     <input type="text" class="structured-input" name="q9" placeholder="Type your answer...">
                 </div>
 
@@ -483,12 +484,11 @@ if (isset($_SESSION['level1_completed']) && $_SESSION['level1_completed'] && iss
                         <span class="q-type">Structured Answer</span>
                     </div>
                     <h3>Give one benefit of the Internet.</h3>
-                    <p class="hint">Hint: It may help with education, communication, or business.</p>
                     <input type="text" class="structured-input" name="q10" placeholder="Type your answer...">
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" name="submit_level1" class="btn-submit">📤 Submit Answers</button>
+                    <button type="submit" name="submit_level1" class="btn-submit"> Submit Answers</button>
                 </div>
             </form>
             <?php endif; ?>
@@ -496,7 +496,7 @@ if (isset($_SESSION['level1_completed']) && $_SESSION['level1_completed'] && iss
             <?php if ($_SESSION['level1_completed'] && isset($_SESSION['level1_passed'])): ?>
             <div class="results-section <?php echo $_SESSION['level1_passed'] ? 'passed' : 'failed'; ?>">
                 <div class="results-icon">
-                    <?php echo $_SESSION['level1_passed'] ? '🎉' : '😅'; ?>
+                    <?php echo $_SESSION['level1_passed'] ? '🎉' : ''; ?>
                 </div>
                 <h2><?php echo $_SESSION['level1_passed'] ? 'Congratulations!' : 'Keep Trying!'; ?></h2>
                 <div class="score-display">
@@ -509,8 +509,8 @@ if (isset($_SESSION['level1_completed']) && $_SESSION['level1_completed'] && iss
                     <p class="success-message">🌟 Level 2 is now unlocked! You earned <?php echo 50 + ($_SESSION['level1_score'] * 5); ?> XP!</p>
                     <p style="color: #999; font-size: 14px;">Redirecting to Learn page in 5 seconds...</p>
                 <?php else: ?>
-                    <p class="error-message">You need 80% to pass. Please try again.</p>
-                    <button class="btn-retry" onclick="location.reload()">🔄 Try Again</button>
+                    <p class="error-message">You need 70% to pass. Please try again.</p>
+                    <button class="btn-retry" onclick="location.reload()"> Try Again</button>
                 <?php endif; ?>
             </div>
             <?php endif; ?>

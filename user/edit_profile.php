@@ -1,6 +1,7 @@
 <?php
 require_once("../middleware/user.php");
 require_once("../core.php");
+require_once("../includes/achievements.php");
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
@@ -38,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param("ssi", $program, $experience, $user_id);
         
         if ($stmt->execute()) {
+            evaluate_achievements($conn, $user_id);
             // Set success message in session to show on profile page
             $_SESSION['profile_update_message'] = "✅ Profile updated successfully!";
             // Redirect to profile page
@@ -88,6 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param("si", $new_filename, $user_id);
                 
                 if ($stmt->execute()) {
+                    evaluate_achievements($conn, $user_id);
                     $_SESSION['profile_update_message'] = "✅ Profile picture uploaded successfully!";
                     header("Location: profile.php");
                     exit;

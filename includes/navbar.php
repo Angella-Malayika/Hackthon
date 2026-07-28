@@ -4,15 +4,12 @@
 
         <h2>
             Welcome,
-            <?php echo htmlspecialchars($_SESSION['fullname']); ?> 👋
+            <?php echo htmlspecialchars($_SESSION['fullname']); ?> 
         </h2>
 
     </div>
 
     <div class="top-right">
-
-        <span class="notification">🔔</span>
-
         <div class="profile">
 
             <div class="avatar">

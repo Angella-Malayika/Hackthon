@@ -124,7 +124,7 @@ $xp = $user['xp'];
 
 <div class="learn-header">
 
-<h1>🎮 Learning Journey</h1>
+<h1> Learning Journey</h1>
 
 <p>Complete each level to unlock the next one.</p>
 

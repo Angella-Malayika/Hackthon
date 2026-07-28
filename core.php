@@ -6,7 +6,7 @@ $password = "";
 $db_name = "hackthon";
 
 // Default XAMPP MySQL port is usually 3306. If your MySQL server runs on another port, update it here.
-$port = 3305;
+$port = 3307;
 
 $conn = new mysqli($servername, $username, $password, $db_name, $port);
 if ($conn->connect_error) {

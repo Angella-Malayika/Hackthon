@@ -13,45 +13,7 @@ $admin_initial = strtoupper(substr($admin_name, 0, 1));
     </div>
 
     <div class="topbar-right">
-        <!-- Notifications -->
-        <div class="notification-wrapper">
-            <span class="notification-icon">🔔</span>
-            <span class="notification-badge" id="notificationBadge">3</span>
-            
-            <!-- Notification Dropdown -->
-            <div class="notification-dropdown" id="notificationDropdown">
-                <div class="dropdown-header">
-                    <h4>Notifications</h4>
-                    <span class="mark-all-read">Mark all as read</span>
-                </div>
-                <div class="dropdown-body">
-                    <div class="notification-item unread">
-                        <span class="notif-icon">📚</span>
-                        <div class="notif-content">
-                            <p>New lesson added: "Internet Privacy"</p>
-                            <small>5 minutes ago</small>
-                        </div>
-                    </div>
-                    <div class="notification-item unread">
-                        <span class="notif-icon">👤</span>
-                        <div class="notif-content">
-                            <p>New user registered: John Doe</p>
-                            <small>15 minutes ago</small>
-                        </div>
-                    </div>
-                    <div class="notification-item">
-                        <span class="notif-icon">💬</span>
-                        <div class="notif-content">
-                            <p>New feedback from Sarah</p>
-                            <small>1 hour ago</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="dropdown-footer">
-                    <a href="#">View all notifications</a>
-                </div>
-            </div>
-        </div>
+
 
         <!-- Admin Profile -->
         <div class="admin-profile">

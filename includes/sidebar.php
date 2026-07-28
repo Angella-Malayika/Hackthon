@@ -28,6 +28,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <a href="../user/quests.php">🎯 Quests</a>
         </li>
 
+        <li class="<?= $currentPage == 'achievements.php' ? 'active' : '' ?>">
+            <a href="../user/achievements.php">🏆 Achievements</a>
+        </li>
+
         <li class="<?= $currentPage == 'profile.php' ? 'active' : '' ?>">
             <a href="../user/profile.php">👤 Profile</a>
         </li>

@@ -614,3 +614,12 @@
         padding: 14px 16px;
     }
 }
+/* Avatar image support - shows the uploaded profile picture when set,
+   falling back to initials otherwise (see profile.php / navbar.php) */
+.profile-avatar img,
+.friend-avatar-sm img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
